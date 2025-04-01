@@ -1,0 +1,39 @@
+{
+  "language": "Solidity",
+  "sources": {
+    "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol": {
+      "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.0;\n\n// solhint-disable-next-line interface-starts-with-i\ninterface AggregatorV3Interface {\n  function decimals() external view returns (uint8);\n\n  function description() external view returns (string memory);\n\n  function version() external view returns (uint256);\n\n  function getRoundData(\n    uint80 _roundId\n  ) external view returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound);\n\n  function latestRoundData()\n    external\n    view\n    returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound);\n}\n"
+    },
+    "contracts/FundMe.sol": {
+      "content": "// SPDX-License-Identifier: MIT\r\npragma solidity ^0.8.26;\r\n\r\nimport {AggregatorV3Interface} from \"@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol\";\r\n\r\ncontract FundMe {\r\n\r\n    AggregatorV3Interface public dataFeed;\r\n\r\n    mapping(address => uint256) public funderToAmount;\r\n\r\n    uint256 MINIMUM_VALUE = 2 * 10 ** 18;\r\n\r\n    uint256 constant target = 6 * 10 ** 18;\r\n\r\n    address public owner;\r\n\r\n    uint256 deploymentTimestamp;\r\n    uint256 lockTime;\r\n\r\n    address erc20Addr;\r\n\r\n    bool public getFundSuccess = false;\r\n\r\n    constructor(uint256 _lockTime, address dataFeedAddr) {\r\n        dataFeed = AggregatorV3Interface(\r\n            dataFeedAddr\r\n        );\r\n        owner = msg.sender;\r\n        deploymentTimestamp = block.timestamp;\r\n        lockTime = _lockTime;\r\n    }\r\n\r\n    function fund() external payable {\r\n        require(convertEthToUsd(msg.value) >= MINIMUM_VALUE, \"Send more ETH\");\r\n        require(block.timestamp < deploymentTimestamp + lockTime, \"window is closed\");\r\n        funderToAmount[msg.sender] = msg.value;\r\n    }\r\n\r\n        function getChainlinkDataFeedLatestAnswer() public view returns (int) {\r\n        // prettier-ignore\r\n        (\r\n            /* uint80 roundID */,\r\n            int answer,\r\n            /*uint startedAt*/,\r\n            /*uint timeStamp*/,\r\n            /*uint80 answeredInRound*/\r\n        ) = dataFeed.latestRoundData();\r\n        return answer;\r\n    }\r\n\r\n    function convertEthToUsd(uint256 ethAmount) internal view returns(uint256) {\r\n        uint256 ethPrice = uint256(getChainlinkDataFeedLatestAnswer());\r\n        return ethAmount * ethPrice/ (10 ** 8);\r\n    }\r\n\r\n    function getFund() external {\r\n        require(convertEthToUsd(address(this).balance) >= target, \"target is not reached\");\r\n        require(msg.sender == owner, \"this function can only be called by owner\");\r\n        require(block.timestamp >= deploymentTimestamp + lockTime, \"window is not closed\");\r\n        payable(msg.sender).transfer(address(this).balance);\r\n        getFundSuccess = true;\r\n    }\r\n\r\n    function transferOwnership(address newOwnser) public {\r\n        require(msg.sender == owner, \"this function can only be called by owner\");\r\n        owner = newOwnser;\r\n    }\r\n\r\n    function refund() external windowClose{\r\n        require(convertEthToUsd(address(this).balance) < target, \"target is reached\");\r\n        bool success;\r\n        (success, ) = payable(msg.sender).call{value: funderToAmount[msg.sender]}(\"\");\r\n        funderToAmount[msg.sender] = 0;\r\n    }\r\n\r\n    modifier windowClose(){\r\n        require(block.timestamp >= deploymentTimestamp + lockTime, \"window is not closed\");\r\n        _;\r\n    }\r\n\r\n    function setFunderToAmount(address funder, uint256 amountToUpdate) external {\r\n        require(msg.sender == erc20Addr, \"you are not authorized to use this function\");\r\n        funderToAmount[funder] = amountToUpdate;\r\n    }\r\n\r\n    function setErc20Addr(address _erc20Addr) public {\r\n        require(msg.sender == owner, \"this function can only be called by owner\");\r\n        erc20Addr = _erc20Addr;\r\n    }\r\n}"
+    }
+  },
+  "settings": {
+    "evmVersion": "paris",
+    "optimizer": {
+      "enabled": false,
+      "runs": 200
+    },
+    "outputSelection": {
+      "*": {
+        "*": [
+          "abi",
+          "evm.bytecode",
+          "evm.deployedBytecode",
+          "evm.methodIdentifiers",
+          "metadata",
+          "devdoc",
+          "userdoc",
+          "storageLayout",
+          "evm.gasEstimates"
+        ],
+        "": [
+          "ast"
+        ]
+      }
+    },
+    "metadata": {
+      "useLiteralContent": true
+    }
+  }
+}

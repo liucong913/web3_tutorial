@@ -5,7 +5,7 @@ import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interf
 
 contract FundMe {
 
-    AggregatorV3Interface internal dataFeed;
+    AggregatorV3Interface public dataFeed;
 
     mapping(address => uint256) public funderToAmount;
 
@@ -22,9 +22,9 @@ contract FundMe {
 
     bool public getFundSuccess = false;
 
-    constructor(uint256 _lockTime) {
+    constructor(uint256 _lockTime, address dataFeedAddr) {
         dataFeed = AggregatorV3Interface(
-            0x694AA1769357215DE4FAC081bf1f309aDC325306
+            dataFeedAddr
         );
         owner = msg.sender;
         deploymentTimestamp = block.timestamp;
