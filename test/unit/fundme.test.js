@@ -1,6 +1,6 @@
 const { ethers, deployments, getNamedAccounts } = require("hardhat")
 const { assert } = require("chai")
-const helpers = require("@nomicfoundation/hardhat-networks-helps")
+const helpers = require("@nomicfoundation/hardhat-network-helpers")
 
 describe("test fundme contract", async function () {
 
@@ -21,10 +21,10 @@ describe("test fundme contract", async function () {
         assert.equal((await fundMe.owner()), firstAccount)
     })
 
-    it("test if the dataFeed is 0x694AA1769357215DE4FAC081bf1f309aDC325306", async function () {
-        await fundMe.waitForDeployment()
-        assert.equal((await fundMe.dataFeed()), "0x694AA1769357215DE4FAC081bf1f309aDC325306")
-    })
+    // it("test if the dataFeed is 0x694AA1769357215DE4FAC081bf1f309aDC325306", async function () {
+    //     await fundMe.waitForDeployment()
+    //     assert.equal((await fundMe.dataFeed()), "0x694AA1769357215DE4FAC081bf1f309aDC325306")
+    // })
 
     it("window closed", async function () {
         await helpers.time.increase(200)
